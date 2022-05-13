@@ -15,6 +15,16 @@ global paused
 paused = False
 colorcount = 0
 
+font = pygame.font.SysFont("Comic Sans", 32)
+
+text = font.render("SPACE TO PAUSE, RIGHT ARROW TO PLAY, CLICK TO SKIP SONG", False, (180, 180, 180))
+text_x = text.get_width()
+text_y = text.get_height()
+
+surface1 = pygame.surface.Surface((text_x, text_y))
+surface1.blit(text, (0,0))
+
+
 class Button(pygame.sprite.Sprite):
     def __init__(self, posx, posy, file1, file2):
         super().__init__()
@@ -27,18 +37,25 @@ class Button(pygame.sprite.Sprite):
         self.rect.center = (posx, posy)
     def update(self, currently_paused):
         if currently_paused == False:
-            self.image = pygame.image.load(self.file2)
+            self.image = pygame.image.load(self.file1)
             self.rect = self.image.get_rect()
             self.rect.center = (self.posx, self.posy)
             button_group.draw(screen)
             pygame.display.flip()
 
         else:
-            self.image = pygame.image.load(self.file1)
+            self.image = pygame.image.load(self.file2)
             self.rect = self.image.get_rect()
             self.rect.center = (self.posx, self.posy)
             button_group.draw(screen)
             pygame.display.flip()
+
+def mouse_collision(rectangle):
+    mousevents = pygame.mouse.get_pressed()
+    mouse_pos = pygame.mouse.get_pos()
+    collisionbool = rectangle.collidepoint(mouse_pos)
+    if collisionbool == True and mousevents[0] == True:
+        raise SystemExit
 
 
 
@@ -77,8 +94,8 @@ def pause():
         print("runnning")
         seconds = 0
         sub = 0
-        button_group.update(paused)
         paused = True
+        button_group.update(paused)
         pygame.mixer.music.pause()
 #### you may ask: if we end up running this once(in the scenario where space is hit and pause = false), wouldn't
 #### it be futile because the next iteration paused will be true?
@@ -89,8 +106,8 @@ def pause():
     if keys[pygame.K_UP] == True and paused == True:
         print("running1")
         seconds = 1
-        button_group.update(paused)
         paused = False
+        button_group.update(paused)
         pygame.mixer.music.unpause()
 
 
@@ -99,6 +116,10 @@ def pause():
 def timer(t):
     global seconds
     global subtractor
+    global paused
+    screen.blit(surface1, (0,0))
+    #no flip needed, button group automatically takes what is drawn to screen and flips to user in the next line
+    button_group.update(paused)
     seconds = 1
     while t > 0:
         start_time = time.time()
@@ -116,6 +137,8 @@ def timer(t):
             if time.time() - time_array[-1] > 0.5:
                 print("a second has elapsed since last pause")
                 t = 0
+                paused = False
+                ## if we skip a song, we want pause to go back to False so we can display pause img
                 time_array.append(time.time())
                 print("the newest time at which we have pause has been added to the time array list")
                 print("this list's purpose is to append the various times at which we skip songs so that we can")
